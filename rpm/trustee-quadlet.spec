@@ -4,6 +4,10 @@
 %global project_name trustee-quadlet
 %global project_version 0.1.0
 
+# Build conditional for offline subpackage (disabled by default)
+# Enable with: rpmbuild --with offline
+%bcond offline 0
+
 Name:           %{project_name}
 Version:        %{project_version}
 Release:        1%{?dist}
@@ -23,6 +27,7 @@ Requires:       podman >= 4.4
 Requires:       systemd
 Requires:       container-selinux
 %{?systemd_requires}
+%{?systemd_ordering}
 
 # For health checks
 Recommends:     curl
@@ -42,6 +47,7 @@ This package provides Podman Quadlet configurations to run Trustee services
 The container images are pulled from the official Red Hat registry,
 ensuring a single source of truth for builds and security updates.
 
+%if %{with offline}
 # Offline subpackage with embedded container image
 %package        offline
 Summary:        Trustee Quadlet with embedded container image for air-gapped environments
@@ -61,6 +67,7 @@ during package installation.
 
 Note: This package is significantly larger (~95 MB) than the base package.
 For connected environments, use the base trustee-quadlet package instead.
+%endif
 
 %prep
 %autosetup -n %{name}-%{version}
@@ -70,7 +77,6 @@ For connected environments, use the base trustee-quadlet package instead.
 
 %install
 # Create directories
-install -d %{buildroot}%{_sysconfdir}/containers/systemd
 install -d %{buildroot}%{_sysconfdir}/trustee/kbs
 install -d %{buildroot}%{_sysconfdir}/trustee/as
 install -d %{buildroot}%{_sysconfdir}/trustee/rvps
@@ -84,10 +90,8 @@ install -m 0644 quadlet/*.container %{buildroot}%{_datadir}/containers/systemd/
 install -m 0644 quadlet/*.network %{buildroot}%{_datadir}/containers/systemd/
 install -m 0644 quadlet/*.volume %{buildroot}%{_datadir}/containers/systemd/
 
-# Also install to /etc for user convenience (noreplace so upgrades don't overwrite)
-install -m 0644 quadlet/*.container %{buildroot}%{_sysconfdir}/containers/systemd/
-install -m 0644 quadlet/*.network %{buildroot}%{_sysconfdir}/containers/systemd/
-install -m 0644 quadlet/*.volume %{buildroot}%{_sysconfdir}/containers/systemd/
+# Note: Quadlet files are installed only to /usr/share/containers/systemd/ (vendor location)
+# Users can override by creating files in /etc/containers/systemd/ as needed
 
 # Install default configurations
 install -m 0644 configs/kbs/config.toml %{buildroot}%{_sysconfdir}/trustee/kbs/
@@ -95,31 +99,24 @@ install -m 0644 configs/kbs/policy.rego %{buildroot}%{_sysconfdir}/trustee/kbs/
 install -m 0644 configs/as/config.json %{buildroot}%{_sysconfdir}/trustee/as/
 install -m 0644 configs/rvps/config.json %{buildroot}%{_sysconfdir}/trustee/rvps/
 
-# Install embedded container image for offline subpackage (if present)
+%if %{with offline}
+# Install embedded container image for offline subpackage
 # The image tarball should be created during the build process:
 #   podman pull registry.redhat.io/build-of-trustee/trustee-rhel9:latest
 #   podman save -o images/trustee-rhel9.tar.gz registry.redhat.io/build-of-trustee/trustee-rhel9:latest
-if [ -f images/trustee-rhel9.tar.gz ]; then
-    install -m 0644 images/trustee-rhel9.tar.gz %{buildroot}%{_datadir}/%{name}/images/
-fi
+install -m 0644 images/trustee-rhel9.tar.gz %{buildroot}%{_datadir}/%{name}/images/
+%endif
 
 %post
-# Reload systemd to pick up new Quadlet files
-# Note: We don't use %systemd_post because Quadlet generates the units dynamically
-systemctl daemon-reload >/dev/null 2>&1 || :
+%systemd_post trustee-kbs.service trustee-as.service trustee-rvps.service
 
 %preun
-# Stop services before uninstall
-if [ $1 -eq 0 ]; then
-    systemctl stop trustee-kbs trustee-as trustee-rvps >/dev/null 2>&1 || :
-fi
+%systemd_preun trustee-kbs.service trustee-as.service trustee-rvps.service
 
 %postun
-# Reload systemd after removal
-if [ $1 -eq 0 ]; then
-    systemctl daemon-reload >/dev/null 2>&1 || :
-fi
+%systemd_postun_with_restart trustee-kbs.service trustee-as.service trustee-rvps.service
 
+%if %{with offline}
 # Offline subpackage scriptlets
 %post offline
 # Load the embedded container image into podman's local storage
@@ -135,14 +132,14 @@ fi
 # if [ $1 -eq 0 ]; then
 #     podman rmi registry.redhat.io/build-of-trustee/trustee-rhel9 >/dev/null 2>&1 || :
 # fi
+%endif
 
 %files
 %license LICENSE
 %doc README.md
 
 # Vendor Quadlet files (in /usr/share - the "defaults")
-%dir %{_datadir}/containers
-%dir %{_datadir}/containers/systemd
+# Note: %{_datadir}/containers/systemd is owned by containers-common
 %{_datadir}/containers/systemd/trustee-kbs.container
 %{_datadir}/containers/systemd/trustee-as.container
 %{_datadir}/containers/systemd/trustee-rvps.container
@@ -152,17 +149,6 @@ fi
 %{_datadir}/containers/systemd/as-config.volume
 %{_datadir}/containers/systemd/rvps-config.volume
 %{_datadir}/containers/systemd/rvps-data.volume
-
-# User-customizable Quadlet files (in /etc - noreplace to preserve changes)
-%config(noreplace) %{_sysconfdir}/containers/systemd/trustee-kbs.container
-%config(noreplace) %{_sysconfdir}/containers/systemd/trustee-as.container
-%config(noreplace) %{_sysconfdir}/containers/systemd/trustee-rvps.container
-%config(noreplace) %{_sysconfdir}/containers/systemd/trustee.network
-%config(noreplace) %{_sysconfdir}/containers/systemd/kbs-config.volume
-%config(noreplace) %{_sysconfdir}/containers/systemd/kbs-data.volume
-%config(noreplace) %{_sysconfdir}/containers/systemd/as-config.volume
-%config(noreplace) %{_sysconfdir}/containers/systemd/rvps-config.volume
-%config(noreplace) %{_sysconfdir}/containers/systemd/rvps-data.volume
 
 # Configuration directories and files
 %dir %{_sysconfdir}/trustee
@@ -177,13 +163,11 @@ fi
 # Helper scripts directory
 %dir %{_datadir}/%{name}
 
+%if %{with offline}
 %files offline
+%dir %{_datadir}/%{name}/images
 %{_datadir}/%{name}/images/trustee-rhel9.tar.gz
+%endif
 
 %changelog
-* Sun Dec 08 2024 Trustee Maintainers <trustee-maintainers@redhat.com> - 0.1.0-1
-- Initial package
-- Quadlet configurations for KBS, AS, and RVPS
-- Default configuration files
-- systemd integration via Podman Quadlet
-- Added offline subpackage for air-gapped environments
+%autochangelog
