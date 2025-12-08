@@ -15,10 +15,14 @@ Source0:        %{name}-%{version}.tar.gz
 
 BuildArch:      noarch
 
+# Build dependencies
+BuildRequires:  systemd-rpm-macros
+
 # Runtime dependencies
 Requires:       podman >= 4.4
 Requires:       systemd
 Requires:       container-selinux
+%{?systemd_requires}
 
 # For health checks
 Recommends:     curl
@@ -38,17 +42,6 @@ This package provides Podman Quadlet configurations to run Trustee services
 The container images are pulled from the official Red Hat registry,
 ensuring a single source of truth for builds and security updates.
 
-%package        selinux
-Summary:        SELinux policy for Trustee Quadlet
-Requires:       %{name} = %{version}-%{release}
-Requires:       selinux-policy
-Requires:       policycoreutils
-
-%description    selinux
-SELinux policy module for running Trustee services via Podman Quadlet.
-This package provides additional SELinux contexts and policies for
-secure operation in enforcing mode.
-
 %prep
 %autosetup -n %{name}-%{version}
 
@@ -62,7 +55,6 @@ install -d %{buildroot}%{_sysconfdir}/trustee/kbs
 install -d %{buildroot}%{_sysconfdir}/trustee/as
 install -d %{buildroot}%{_sysconfdir}/trustee/rvps
 install -d %{buildroot}%{_datadir}/%{name}
-install -d %{buildroot}%{_docdir}/%{name}
 
 # Install Quadlet files to /usr/share (vendor location, can be overridden in /etc)
 # Following systemd convention: vendor files in /usr, user overrides in /etc
@@ -77,47 +69,31 @@ install -m 0644 quadlet/*.network %{buildroot}%{_sysconfdir}/containers/systemd/
 install -m 0644 quadlet/*.volume %{buildroot}%{_sysconfdir}/containers/systemd/
 
 # Install default configurations
-install -m 0644 configs/kbs/* %{buildroot}%{_sysconfdir}/trustee/kbs/
-install -m 0644 configs/as/* %{buildroot}%{_sysconfdir}/trustee/as/
-install -m 0644 configs/rvps/* %{buildroot}%{_sysconfdir}/trustee/rvps/
-
-# Install documentation
-install -m 0644 README.md %{buildroot}%{_docdir}/%{name}/
-install -m 0644 docs/*.md %{buildroot}%{_docdir}/%{name}/ 2>/dev/null || true
-
-# Install helper scripts
-install -m 0755 scripts/* %{buildroot}%{_datadir}/%{name}/ 2>/dev/null || true
+install -m 0644 configs/kbs/config.toml %{buildroot}%{_sysconfdir}/trustee/kbs/
+install -m 0644 configs/kbs/policy.rego %{buildroot}%{_sysconfdir}/trustee/kbs/
+install -m 0644 configs/as/config.json %{buildroot}%{_sysconfdir}/trustee/as/
+install -m 0644 configs/rvps/config.json %{buildroot}%{_sysconfdir}/trustee/rvps/
 
 %post
 # Reload systemd to pick up new Quadlet files
-systemctl daemon-reload
-
-# Pull container images (optional, can be slow)
-echo "To pull container images now, run:"
-echo "  podman pull registry.redhat.io/rhtas/trustee-kbs:latest"
-echo "  podman pull registry.redhat.io/rhtas/trustee-as:latest"
-echo "  podman pull registry.redhat.io/rhtas/trustee-rvps:latest"
-echo ""
-echo "To start Trustee services:"
-echo "  systemctl start trustee-kbs"
-echo ""
-echo "Configuration files are in /etc/trustee/"
+# Note: We don't use %systemd_post because Quadlet generates the units dynamically
+systemctl daemon-reload >/dev/null 2>&1 || :
 
 %preun
 # Stop services before uninstall
 if [ $1 -eq 0 ]; then
-    systemctl stop trustee-kbs trustee-as trustee-rvps 2>/dev/null || true
+    systemctl stop trustee-kbs trustee-as trustee-rvps >/dev/null 2>&1 || :
 fi
 
 %postun
 # Reload systemd after removal
 if [ $1 -eq 0 ]; then
-    systemctl daemon-reload
+    systemctl daemon-reload >/dev/null 2>&1 || :
 fi
 
 %files
 %license LICENSE
-%doc %{_docdir}/%{name}
+%doc README.md
 
 # Vendor Quadlet files (in /usr/share - the "defaults")
 %dir %{_datadir}/containers
@@ -143,25 +119,22 @@ fi
 %config(noreplace) %{_sysconfdir}/containers/systemd/rvps-config.volume
 %config(noreplace) %{_sysconfdir}/containers/systemd/rvps-data.volume
 
-# Configuration directories (noreplace to preserve user changes)
+# Configuration directories and files
 %dir %{_sysconfdir}/trustee
 %dir %{_sysconfdir}/trustee/kbs
 %dir %{_sysconfdir}/trustee/as
 %dir %{_sysconfdir}/trustee/rvps
-%config(noreplace) %{_sysconfdir}/trustee/kbs/*
-%config(noreplace) %{_sysconfdir}/trustee/as/*
-%config(noreplace) %{_sysconfdir}/trustee/rvps/*
+%config(noreplace) %{_sysconfdir}/trustee/kbs/config.toml
+%config(noreplace) %{_sysconfdir}/trustee/kbs/policy.rego
+%config(noreplace) %{_sysconfdir}/trustee/as/config.json
+%config(noreplace) %{_sysconfdir}/trustee/rvps/config.json
 
-# Helper scripts
-%{_datadir}/%{name}
-
-%files selinux
-# SELinux policy files would go here
-# %{_datadir}/selinux/packages/%{name}.pp
+# Helper scripts directory
+%dir %{_datadir}/%{name}
 
 %changelog
-* Mon Dec 02 2024 Trustee Maintainers <trustee-maintainers@redhat.com> - 0.1.0-1
+* Sun Dec 08 2024 Trustee Maintainers <trustee-maintainers@redhat.com> - 0.1.0-1
 - Initial package
 - Quadlet configurations for KBS, AS, and RVPS
 - Default configuration files
-- systemd integration
+- systemd integration via Podman Quadlet
