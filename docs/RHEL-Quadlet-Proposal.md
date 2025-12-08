@@ -264,7 +264,7 @@ We have a working deployment on Azure RHEL 9 that demonstrates the full workflow
 |-----------|---------|
 | **VM** | Azure RHEL 9.5, Standard_B2s |
 | **Image** | `registry.redhat.io/build-of-trustee/trustee-rhel9` |
-| **Access** | `ssh azureuser@172.174.6.53` |
+| **Access** | See TEST-ENV.md (gitignored) |
 
 ### Step 1: Verify systemd Integration
 
@@ -434,7 +434,7 @@ curl http://localhost:8080/kbs/v0/resource/default/test/key
 | **Prototype code** | `trustee/contrib/rhel-quadlet/` |
 | **RPM spec** | `trustee/contrib/rhel-quadlet/rpm/trustee-quadlet.spec` |
 | **Test suite** | `make test-static` (55 tests, all passing) |
-| **Live demo VM** | `ssh azureuser@172.174.6.53` (RHEL 9, Azure) |
+| **Live demo VM** | See TEST-ENV.md (RHEL 9, Azure) |
 | **Container image** | `registry.redhat.io/build-of-trustee/trustee-rhel9` |
 | **Quadlet docs** | https://docs.podman.io/en/latest/markdown/podman-systemd.unit.5.html |
 

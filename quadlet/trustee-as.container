@@ -6,7 +6,7 @@
 
 [Unit]
 Description=Trustee Attestation Service
-Documentation=https://github.com/confidential-containers/trustee
+Documentation=https://www.redhat.com/en/blog/introducing-confidential-containers-trustee-attestation-services-solution-overview-and-use-cases
 
 # Start after RVPS is available
 After=network-online.target trustee-rvps.service

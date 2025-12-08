@@ -2,6 +2,10 @@
 
 Run Trustee attestation services (KBS, AS, RVPS) as systemd-managed containers on RHEL using Podman Quadlet.
 
+## Demo
+
+![Trustee on RHEL via Quadlet](docs/trustee-quadlet-demo.gif)
+
 ## Overview
 
 This package provides Quadlet configurations that enable running Trustee on RHEL/Fedora systems using native systemd service management while leveraging container images as the deployment artifact.

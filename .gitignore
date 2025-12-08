@@ -10,3 +10,9 @@ _build/
 
 # OS files
 .DS_Store
+
+# Local/sensitive configuration (IPs, credentials, keys)
+.local/
+TEST-ENV.md
+*.pem
+auth.json

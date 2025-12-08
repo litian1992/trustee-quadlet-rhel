@@ -6,7 +6,7 @@
 
 [Unit]
 Description=Trustee Reference Value Provider Service
-Documentation=https://github.com/confidential-containers/trustee
+Documentation=https://www.redhat.com/en/blog/introducing-confidential-containers-trustee-attestation-services-solution-overview-and-use-cases
 
 # Network dependencies
 After=network-online.target

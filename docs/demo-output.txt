@@ -1,0 +1,65 @@
+══════════════════════════════════════════════════════════════════
+     Trustee on RHEL - Quadlet/Container Demo                     
+══════════════════════════════════════════════════════════════════
+
+──────────────────────────────────────────────────────────────────
+1. THIS IS A RHEL VM IN AZURE
+──────────────────────────────────────────────────────────────────
+Red Hat Enterprise Linux release 9.7 (Plow)
+Cloud: AzurePublicCloud, Location: eastus, Size: Standard_D2s_v3
+
+──────────────────────────────────────────────────────────────────
+2. TRUSTEE INSTALLED VIA QUADLET
+──────────────────────────────────────────────────────────────────
+/etc/containers/systemd/trustee-kbs.container
+[Unit]
+Description=Trustee Key Broker Service (All-in-One)
+Documentation=https://github.com/confidential-containers/trustee
+After=network-online.target
+Wants=network-online.target
+
+[Container]
+Image=registry.redhat.io/build-of-trustee/trustee-rhel9:1.0
+ContainerName=trustee-kbs
+PublishPort=8080:8080
+
+──────────────────────────────────────────────────────────────────
+3. RUNNING AS SYSTEMD SERVICE
+──────────────────────────────────────────────────────────────────
+● trustee-kbs.service - Trustee Key Broker Service (All-in-One)
+     Loaded: loaded (/etc/containers/systemd/trustee-kbs.container; generated)
+     Active: active (running) since Wed 2025-12-03 09:56:13 UTC; 5 days ago
+       Docs: https://github.com/confidential-containers/trustee
+   Main PID: 48713 (conmon)
+      Tasks: 13 (limit: 48327)
+     Memory: 36.6M (peak: 49.6M)
+        CPU: 2min 16.074s
+     CGroup: /system.slice/trustee-kbs.service
+
+──────────────────────────────────────────────────────────────────
+4. USING RED HAT BUILD OF TRUSTEE CONTAINER IMAGE
+──────────────────────────────────────────────────────────────────
+trustee-kbs: registry.redhat.io/build-of-trustee/trustee-rhel9@sha256:dddf41eb16c4c58d4977639df03311825abb11153ca6b678c93e604152a6a6e6
+
+──────────────────────────────────────────────────────────────────
+5. TRUSTEE RESPONDING WITH NONCE
+──────────────────────────────────────────────────────────────────
+$ curl -s http://localhost:8080/kbs/v0/auth -X POST \
+    -H "Content-Type: application/json" \
+    -d '{"version":"0.2.0","tee":"sample","extra-params":""}'
+
+{
+  "nonce": "b7TIkJE4u+EiaEsLfmEtlBQZ1QlJYnoz/HkGmiU4+uE=",
+  "extra-params": ""
+}
+
+══════════════════════════════════════════════════════════════════
+DEMO COMPLETE - December 2024
+══════════════════════════════════════════════════════════════════
+
+Summary:
+  • RHEL 9.7 VM running in Azure (eastus)
+  • Trustee installed via Quadlet (systemd-native container)
+  • Using official Red Hat Build of Trustee container image
+  • KBS responding with RCAR challenge nonce
+  • Uptime: 5+ days continuous operation
