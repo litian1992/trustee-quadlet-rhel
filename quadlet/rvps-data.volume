@@ -1,0 +1,12 @@
+# RVPS Data Volume
+# Persistent storage for reference values and provenance data
+
+[Volume]
+Label=app=trustee
+Label=component=rvps
+Label=type=data
+
+# This volume stores:
+# - Reference values
+# - Provenance records
+# - Runtime state

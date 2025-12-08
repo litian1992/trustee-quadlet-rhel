@@ -1,0 +1,12 @@
+# Build artifacts
+build/
+_build/
+*.rpm
+
+# Editor files
+.vscode/
+*.swp
+*~
+
+# OS files
+.DS_Store

@@ -1,0 +1,10 @@
+# RVPS Configuration Volume
+# Stores RVPS configuration files mounted from /etc/trustee/rvps
+
+[Volume]
+Label=app=trustee
+Label=component=rvps
+Label=type=config
+
+# This volume is used to mount configuration from the host
+# The actual config files come from /etc/trustee/rvps/

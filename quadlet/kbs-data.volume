@@ -1,0 +1,12 @@
+# KBS Data Volume
+# Persistent storage for KBS runtime data (keys, resources, etc.)
+
+[Volume]
+Label=app=trustee
+Label=component=kbs
+Label=type=data
+
+# This volume stores:
+# - Registered resources/secrets
+# - Session data
+# - Runtime state

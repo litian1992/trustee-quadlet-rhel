@@ -1,0 +1,29 @@
+{
+    "_comment": "Attestation Service Configuration for Quadlet Deployment",
+
+    "work_dir": "/var/lib/as",
+
+    "policy_engine": "opa",
+
+    "rvps_config": {
+        "_comment": "Connect to RVPS via gRPC on the container network",
+        "type": "GrpcRemote",
+        "address": "http://trustee-rvps:50003"
+    },
+
+    "attestation_token_broker": {
+        "duration_min": 5,
+        "_comment_signer": "For production, configure proper signing keys",
+        "signer": null
+    },
+
+    "_comment_verifiers": "Verifier configuration - uncomment and customize as needed",
+    "_verifiers": {
+        "snp": {
+            "certs_dir": "/var/lib/as/certs/snp"
+        },
+        "tdx": {
+            "certs_dir": "/var/lib/as/certs/tdx"
+        }
+    }
+}

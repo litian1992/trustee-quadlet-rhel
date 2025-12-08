@@ -1,0 +1,63 @@
+# KBS Configuration for Quadlet Deployment
+# This configuration runs KBS with an external (gRPC) Attestation Service
+
+[http_server]
+# Listen on all interfaces inside the container
+socket_addr = "0.0.0.0:8080"
+
+# In production, set this to false and configure TLS
+insecure_http = true
+
+# TLS configuration (uncomment for production)
+# [http_server.tls]
+# certificate = "/etc/kbs/certs/server.crt"
+# private_key = "/etc/kbs/certs/server.key"
+
+[attestation_token]
+# In production, set this to false and configure proper keys
+insecure_key = true
+
+# Token signing configuration (uncomment for production)
+# [attestation_token.signer]
+# key_path = "/etc/kbs/keys/token.key"
+# cert_path = "/etc/kbs/keys/token-cert-chain.pem"
+
+[attestation_service]
+# Use gRPC to connect to external Attestation Service
+type = "coco_as_grpc"
+
+# AS address - uses container DNS name on the trustee network
+# This is resolved via the Podman network
+url = "http://trustee-as:50004"
+
+# Timeout for AS communication
+timeout_ms = 10000
+
+[policy_engine]
+# OPA policy for authorization decisions
+policy_path = "/etc/kbs/policy.rego"
+
+[admin]
+# SECURITY WARNING: Do not use InsecureAllowAll in production!
+# Configure proper authentication for production deployments
+type = "InsecureAllowAll"
+
+# Production admin configuration example:
+# type = "Basic"
+# username = "admin"
+# password_hash = "$argon2id$..."  # Use argon2 password hash
+
+# Resource plugin - local filesystem storage
+[[plugins]]
+name = "resource"
+type = "LocalFs"
+dir_path = "/var/lib/kbs/repository"
+
+# Uncomment to add HashiCorp Vault backend
+# [[plugins]]
+# name = "resource"
+# type = "Vault"
+# vault_url = "https://vault.example.com:8200"
+# token = "hvs.your-vault-token-here"
+# mount_path = "secret"
+# verify_ssl = true

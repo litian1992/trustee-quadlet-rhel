@@ -1,0 +1,81 @@
+# Trustee Attestation Service (AS)
+# Verifies TEE evidence and generates attestation tokens
+#
+# AS depends on RVPS for reference values and is required by KBS for attestation.
+# It acts as the "Verifier" in the RATS architecture.
+
+[Unit]
+Description=Trustee Attestation Service
+Documentation=https://github.com/confidential-containers/trustee
+
+# Start after RVPS is available
+After=network-online.target trustee-rvps.service
+Wants=network-online.target
+Requires=trustee-rvps.service
+
+[Container]
+# Container image - uses Red Hat registry
+# For development/testing, override with: Image=quay.io/confidential-containers/as:latest
+Image=registry.redhat.io/rhtas/trustee-as:latest
+
+# Container name for DNS resolution on the trustee network
+ContainerName=trustee-as
+
+# Connect to the trustee internal network
+Network=trustee.network
+
+# gRPC port - internal only, not exposed to host
+# KBS connects to this port via the container network
+ExposeHostPort=50004
+
+# Configuration mount (read-only)
+Volume=/etc/trustee/as:/etc/as:ro,Z
+
+# Environment variables
+Environment=RUST_LOG=info
+Environment=AS_CONFIG_FILE=/etc/as/config.json
+
+# RVPS connection - uses container name for DNS resolution
+Environment=AS_RVPS_ADDR=http://trustee-rvps:50003
+
+# Security hardening
+NoNewPrivileges=true
+
+# Read-only root filesystem with tmpfs for runtime
+ReadOnly=true
+Tmpfs=/tmp:rw,noexec,nosuid,size=64m
+
+# Drop all capabilities
+DropCapability=ALL
+
+# Health check
+HealthCmd=sh -c 'ss -tlnp | grep -q 50004 || exit 1'
+HealthInterval=30s
+HealthTimeout=10s
+HealthRetries=3
+HealthStartPeriod=15s
+
+# Resource limits (adjust based on workload)
+# Memory=512M
+
+[Service]
+# Restart policy
+Restart=on-failure
+RestartSec=10s
+
+# Startup/shutdown timeouts
+TimeoutStartSec=90s
+TimeoutStopSec=30s
+
+# systemd hardening
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=trustee-as
+
+[Install]
+WantedBy=multi-user.target default.target

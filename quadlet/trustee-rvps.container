@@ -1,0 +1,82 @@
+# Trustee Reference Value Provider Service (RVPS)
+# Manages reference values for attestation evidence verification
+#
+# RVPS is the first service to start - it has no dependencies on other Trustee services.
+# The Attestation Service (AS) connects to RVPS to fetch reference values.
+
+[Unit]
+Description=Trustee Reference Value Provider Service
+Documentation=https://github.com/confidential-containers/trustee
+
+# Network dependencies
+After=network-online.target
+Wants=network-online.target
+
+[Container]
+# Container image - uses Red Hat registry
+# For development/testing, override with: Image=quay.io/confidential-containers/rvps:latest
+Image=registry.redhat.io/rhtas/trustee-rvps:latest
+
+# Container name for DNS resolution on the trustee network
+ContainerName=trustee-rvps
+
+# Connect to the trustee internal network
+Network=trustee.network
+
+# gRPC port - internal only, not exposed to host
+# AS connects to this port via the container network
+ExposeHostPort=50003
+
+# Configuration mount (read-only)
+# Mount host config directory to container
+Volume=/etc/trustee/rvps:/etc/rvps:ro,Z
+
+# Data persistence
+Volume=rvps-data.volume:/var/lib/rvps:Z
+
+# Environment variables
+Environment=RUST_LOG=info
+Environment=RVPS_CONFIG_FILE=/etc/rvps/config.json
+
+# Security hardening
+NoNewPrivileges=true
+
+# Read-only root filesystem with tmpfs for runtime
+ReadOnly=true
+Tmpfs=/tmp:rw,noexec,nosuid,size=64m
+
+# Drop all capabilities - RVPS doesn't need any
+DropCapability=ALL
+
+# Health check - verify gRPC port is listening
+# Note: grpc_health_probe may not be available; fall back to port check
+HealthCmd=sh -c 'ss -tlnp | grep -q 50003 || exit 1'
+HealthInterval=30s
+HealthTimeout=10s
+HealthRetries=3
+HealthStartPeriod=10s
+
+# Resource limits (adjust based on workload)
+# Memory=256M
+
+[Service]
+# Restart policy
+Restart=on-failure
+RestartSec=10s
+
+# Startup/shutdown timeouts
+TimeoutStartSec=90s
+TimeoutStopSec=30s
+
+# systemd hardening
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=trustee-rvps
+
+[Install]
+WantedBy=multi-user.target default.target

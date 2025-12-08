@@ -1,0 +1,10 @@
+# Attestation Service Configuration Volume
+# Stores AS configuration files mounted from /etc/trustee/as
+
+[Volume]
+Label=app=trustee
+Label=component=as
+Label=type=config
+
+# This volume is used to mount configuration from the host
+# The actual config files come from /etc/trustee/as/
