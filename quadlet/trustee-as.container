@@ -6,7 +6,7 @@
 
 [Unit]
 Description=Trustee Attestation Service
-Documentation=https://www.redhat.com/en/blog/introducing-confidential-containers-trustee-attestation-services-solution-overview-and-use-cases
+Documentation=https://docs.redhat.com/en/documentation/openshift_sandboxed_containers/1.10/html/deploying_trustee/
 
 # Start after RVPS is available
 After=network-online.target trustee-rvps.service
