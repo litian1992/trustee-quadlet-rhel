@@ -47,18 +47,30 @@ This package provides Quadlet configurations that enable running Trustee on RHEL
 └────────────────────────────────────────────────────────────────┘
 ```
 
+## Package Variants
+
+| Package | Size | Use Case |
+|---------|------|----------|
+| `trustee-quadlet` | ~18 KB | Connected environments with registry access |
+| `trustee-quadlet-offline` | ~95 MB | Air-gapped/disconnected environments |
+
+The **offline** variant embeds the container image directly in the RPM, enabling installation without network access.
+
 ## Quick Start
 
 ### Prerequisites
 
 - RHEL 9.2+ / Fedora 38+ with Podman 4.4+
-- Container registry access (Red Hat registry or quay.io)
+- Container registry access (Red Hat registry or quay.io) - *not required for offline variant*
 
-### Installation (from RPM)
+### Installation (Standard - with registry access)
 
 ```bash
 # Install the package
 dnf install trustee-quadlet
+
+# Pull the container image
+podman pull registry.redhat.io/build-of-trustee/trustee-rhel9:latest
 
 # Configure (edit as needed)
 vim /etc/trustee/kbs/config.toml
@@ -69,6 +81,20 @@ systemctl start trustee-kbs
 
 # Check status
 systemctl status trustee-kbs trustee-as trustee-rvps
+```
+
+### Installation (Offline - air-gapped environments)
+
+```bash
+# Install the offline package (includes embedded container image)
+dnf install trustee-quadlet-offline
+
+# The container image is automatically loaded during install
+# No registry access required!
+
+# Configure and start
+vim /etc/trustee/kbs/config.toml
+systemctl start trustee-kbs
 ```
 
 ### Installation (manual)
