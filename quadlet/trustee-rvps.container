@@ -15,17 +15,11 @@ Wants=network-online.target
 [Container]
 # Container image - uses Red Hat registry
 # For development/testing, override with: Image=quay.io/confidential-containers/rvps:latest
-Image=registry.redhat.io/rhtas/trustee-rvps:latest
+Image=quay.io/litian/trustee-rvps:0.15.0
+Pod=trustee.pod
 
 # Container name for DNS resolution on the trustee network
 ContainerName=trustee-rvps
-
-# Connect to the trustee internal network
-Network=trustee.network
-
-# gRPC port - internal only, not exposed to host
-# AS connects to this port via the container network
-ExposeHostPort=50003
 
 # Configuration mount (read-only)
 # Mount host config directory to container
@@ -40,10 +34,6 @@ Environment=RVPS_CONFIG_FILE=/etc/rvps/config.json
 
 # Security hardening
 NoNewPrivileges=true
-
-# Read-only root filesystem with tmpfs for runtime
-ReadOnly=true
-Tmpfs=/tmp:rw,noexec,nosuid,size=64m
 
 # Drop all capabilities - RVPS doesn't need any
 DropCapability=ALL
@@ -67,11 +57,6 @@ RestartSec=10s
 # Startup/shutdown timeouts
 TimeoutStartSec=90s
 TimeoutStopSec=30s
-
-# systemd hardening
-ProtectSystem=strict
-ProtectHome=yes
-PrivateTmp=yes
 
 # Logging
 StandardOutput=journal

@@ -87,7 +87,7 @@ install -d %{buildroot}%{_datadir}/%{name}/images
 # Following systemd convention: vendor files in /usr, user overrides in /etc
 install -d %{buildroot}%{_datadir}/containers/systemd
 install -m 0644 quadlet/*.container %{buildroot}%{_datadir}/containers/systemd/
-install -m 0644 quadlet/*.network %{buildroot}%{_datadir}/containers/systemd/
+install -m 0644 quadlet/*.pod %{buildroot}%{_datadir}/containers/systemd/
 install -m 0644 quadlet/*.volume %{buildroot}%{_datadir}/containers/systemd/
 
 # Note: Quadlet files are installed only to /usr/share/containers/systemd/ (vendor location)
@@ -108,13 +108,13 @@ install -m 0644 images/trustee-rhel9.tar.gz %{buildroot}%{_datadir}/%{name}/imag
 %endif
 
 %post
-%systemd_post trustee-kbs.service trustee-as.service trustee-rvps.service
+%systemd_post trustee-pod.service
 
 %preun
-%systemd_preun trustee-kbs.service trustee-as.service trustee-rvps.service
+%systemd_preun trustee-pod.service
 
 %postun
-%systemd_postun_with_restart trustee-kbs.service trustee-as.service trustee-rvps.service
+%systemd_postun_with_restart trustee-pod.service
 
 %if %{with offline}
 # Offline subpackage scriptlets
@@ -143,12 +143,10 @@ fi
 %{_datadir}/containers/systemd/trustee-kbs.container
 %{_datadir}/containers/systemd/trustee-as.container
 %{_datadir}/containers/systemd/trustee-rvps.container
-%{_datadir}/containers/systemd/trustee.network
-%{_datadir}/containers/systemd/kbs-config.volume
 %{_datadir}/containers/systemd/kbs-data.volume
-%{_datadir}/containers/systemd/as-config.volume
-%{_datadir}/containers/systemd/rvps-config.volume
+%{_datadir}/containers/systemd/as-data.volume
 %{_datadir}/containers/systemd/rvps-data.volume
+%{_datadir}/containers/systemd/trustee.pod
 
 # Configuration directories and files
 %dir %{_sysconfdir}/trustee

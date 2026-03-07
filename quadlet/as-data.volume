@@ -1,0 +1,6 @@
+# Attestation Service Data Volume
+
+[Volume]
+Label=app=trustee
+Label=component=as
+Label=type=data

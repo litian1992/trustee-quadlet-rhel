@@ -2,50 +2,30 @@
 # This configuration runs KBS with an external (gRPC) Attestation Service
 
 [http_server]
-# Listen on all interfaces inside the container
-socket_addr = "0.0.0.0:8080"
+sockets = ["0.0.0.0:8080"]
+insecure_http = false
+private_key = "/etc/kbs/server.key"
+certificate = "/etc/kbs/server.crt"
+worker_count = 4
 
-# In production, set this to false and configure TLS
-insecure_http = true
-
-# TLS configuration (uncomment for production)
-# [http_server.tls]
-# certificate = "/etc/kbs/certs/server.crt"
-# private_key = "/etc/kbs/certs/server.key"
+[admin]
+insecure_api = false
+auth_public_key = "/etc/kbs/auth.pub"
 
 [attestation_token]
-# In production, set this to false and configure proper keys
-insecure_key = true
-
-# Token signing configuration (uncomment for production)
-# [attestation_token.signer]
-# key_path = "/etc/kbs/keys/token.key"
-# cert_path = "/etc/kbs/keys/token-cert-chain.pem"
+insecure_key = false
+attestataion_token_type = "CoCo"
+trusted_certs_paths = ["/etc/kbs/trusted_certs/token0.crt"]
 
 [attestation_service]
 # Use gRPC to connect to external Attestation Service
 type = "coco_as_grpc"
-
-# AS address - uses container DNS name on the trustee network
-# This is resolved via the Podman network
-url = "http://trustee-as:50004"
-
+url = "http://127.0.0.1:50004"
 # Timeout for AS communication
 timeout_ms = 10000
 
 [policy_engine]
-# OPA policy for authorization decisions
 policy_path = "/etc/kbs/policy.rego"
-
-[admin]
-# SECURITY WARNING: Do not use InsecureAllowAll in production!
-# Configure proper authentication for production deployments
-type = "InsecureAllowAll"
-
-# Production admin configuration example:
-# type = "Basic"
-# username = "admin"
-# password_hash = "$argon2id$..."  # Use argon2 password hash
 
 # Resource plugin - local filesystem storage
 [[plugins]]

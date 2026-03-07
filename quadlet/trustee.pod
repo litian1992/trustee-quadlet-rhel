@@ -1,0 +1,7 @@
+[Unit]
+Description=Trustee Server Components Pod
+After=network.target
+
+[Pod]
+PodName=trustee
+Network=host
