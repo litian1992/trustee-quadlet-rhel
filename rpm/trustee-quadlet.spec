@@ -98,6 +98,7 @@ install -m 0644 configs/kbs/config.toml %{buildroot}%{_sysconfdir}/trustee/kbs/
 install -m 0644 configs/kbs/policy.rego %{buildroot}%{_sysconfdir}/trustee/kbs/
 install -m 0644 configs/as/config.json %{buildroot}%{_sysconfdir}/trustee/as/
 install -m 0644 configs/rvps/config.json %{buildroot}%{_sysconfdir}/trustee/rvps/
+install -m 0644 configs/version.env %{buildroot}%{_sysconfdir}/trustee/
 
 %if %{with offline}
 # Install embedded container image for offline subpackage
@@ -157,6 +158,7 @@ fi
 %config(noreplace) %{_sysconfdir}/trustee/kbs/policy.rego
 %config(noreplace) %{_sysconfdir}/trustee/as/config.json
 %config(noreplace) %{_sysconfdir}/trustee/rvps/config.json
+%config(noreplace) %{_sysconfdir}/trustee/version.env
 
 # Helper scripts directory
 %dir %{_datadir}/%{name}
